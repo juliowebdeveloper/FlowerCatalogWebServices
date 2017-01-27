@@ -6,6 +6,8 @@ import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.method.ScrollingMovementMethod;
 import android.view.Menu;
@@ -27,6 +29,7 @@ public class MainActivity extends AppCompatActivity {
     ProgressBar progressBar;
     List<MyTask> tasks;
     List<Flower> flowerList;
+    RecyclerView recyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
         progressBar.setVisibility(View.INVISIBLE);
         tasks = new ArrayList<>();
+        recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
     }
 
 
@@ -79,10 +83,9 @@ public class MainActivity extends AppCompatActivity {
 
     protected  void updateDisplay(){
         if(flowerList!=null ){
-            for (Flower f:
-                 flowerList) {
-                textView.append(f.getName() + "\n");
-            }
+           FlowerAdapter adapter = new FlowerAdapter(this, flowerList);
+            recyclerView.setLayoutManager(new LinearLayoutManager(this));
+            recyclerView.setAdapter(adapter);
         }
 
     }
