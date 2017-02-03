@@ -1,6 +1,8 @@
 package com.hanselandpetal.flowercatalog;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
@@ -19,11 +21,16 @@ import android.widget.Toast;
 
 import com.hanselandpetal.flowercatalog.model.Flower;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
+
+    public static final String PHOTOS_BASE_URL = "http://services.hanselandpetal.com/photos/";
 
     TextView textView;
     ProgressBar progressBar;
@@ -100,7 +107,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private class MyTask extends AsyncTask<String, String, String>{
+    private class MyTask extends AsyncTask<String, String, List<Flower>>{
 
         @Override
         protected void onPreExecute() {
@@ -112,13 +119,11 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        protected void onPostExecute(String result) { //Result que vem do doInBackground
+        protected void onPostExecute(List<Flower> result) { //Result que vem do doInBackground
 
             //Fazendo o parsing do xml
             //flowerList = FlowerXMLParser.parseFeed(result);
-            flowerList = FlowerJSONParser.parseFeed(result);
             updateDisplay();
-
             tasks.remove(this);
             if(tasks.size()==0) {
                 progressBar.setVisibility(View.INVISIBLE);//Só deixa visivel se nao tiver tasks na lista
@@ -132,10 +137,25 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        protected String doInBackground(String... strings) {
+        protected List<Flower> doInBackground(String... strings) {
           //  String result = HttpManager.getData(strings[0]); //Passando o primeiro valor que é a propria url, caso tivessem mais, deve ser apontado
            //Passando com o login para autorização
             String result = HttpManager.getData(strings[0], "feeduser", "feedpassword");
+            //Fazendo o parser aqui no doInBackground
+            flowerList = FlowerJSONParser.parseFeed(result);
+
+            //chamando as imagens das flores - Transferido para o adapter
+      /*      for (Flower f:flowerList) {
+                String imageUrl = PHOTOS_BASE_URL + f.getPhoto(); //apontando pra imagem
+                try {
+                    InputStream in = (InputStream) new URL(imageUrl).getContent(); //retorna todo o content
+                    Bitmap bitmap = BitmapFactory.decodeStream(in);
+                    f.setBitmap(bitmap);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            }*/
 
             /* for (String s:
                  strings) {
@@ -147,7 +167,7 @@ public class MainActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
             }*/
-            return result;
+            return flowerList;
         }
     }
 

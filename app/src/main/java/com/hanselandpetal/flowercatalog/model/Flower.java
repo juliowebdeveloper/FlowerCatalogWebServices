@@ -1,5 +1,7 @@
 package com.hanselandpetal.flowercatalog.model;
 
+import android.graphics.Bitmap;
+
 /**
  * Created by Teste2 on 20/01/2017.
  */
@@ -12,9 +14,19 @@ public class Flower  {
     private String photo;
     private String instructions;
     private Double price;
+    private Bitmap  bitmap;
 
 
 
+
+
+    public Bitmap getBitmap() {
+        return bitmap;
+    }
+
+    public void setBitmap(Bitmap bitmap) {
+        this.bitmap = bitmap;
+    }
 
     public String getCategory() {
         return category;
