@@ -117,6 +117,10 @@ public class MainActivity extends AppCompatActivity {
         ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
         if(networkInfo!=null && networkInfo.isConnectedOrConnecting()){ //Checando se há conectividade com a internet
+            if(networkInfo.getType() != ConnectivityManager.TYPE_WIFI){
+                Toast.makeText(this, "This app doesnt work without wi fi", Toast.LENGTH_SHORT).show();
+                return false;
+            }
             return true;
         }else{
             return false;
