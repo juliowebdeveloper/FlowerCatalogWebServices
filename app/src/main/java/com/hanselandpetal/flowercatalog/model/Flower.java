@@ -8,6 +8,8 @@ import android.graphics.Bitmap;
 
 public class Flower  {
 
+    //Para o retrofit, os nomes dos campos devem ser iguais aos das propriedades do json, ou devemos anota-los
+
     private int productId;
     private String category;
     private String name;

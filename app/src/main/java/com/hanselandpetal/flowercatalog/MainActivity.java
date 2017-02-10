@@ -25,6 +25,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.hanselandpetal.flowercatalog.model.Flower;
+import com.hanselandpetal.flowercatalog.model.FlowersAPI;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,10 +33,16 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+
 public class MainActivity extends AppCompatActivity {
 
 
     public static final String PHOTOS_BASE_URL = "http://services.hanselandpetal.com/photos/";
+    public static final String ENDPOINT ="http://services.hanselandpetal.com/"; //Essa é a Base URL, o resto das urls serão definidas nas interfaces
 
     TextView textView;
     ProgressBar progressBar;
@@ -56,9 +63,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-
-
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
@@ -72,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (id == R.id.action_dotask) {
             if(isOnline()) {
-                requestData("http://services.hanselandpetal.com/feeds/flowers.json"); //Com Autenticação
+                requestData("http://services.hanselandpetal.com/feeds/flowers.json");
             }else{
                 Toast.makeText(this, "Your Device is not online", Toast.LENGTH_SHORT).show();
             }
@@ -81,29 +85,26 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    //Utilizando Volley - Trabalha na arquitetura de callbacks - Não precisa de AsyncTask
     protected void requestData(String url) {
-        StringRequest request = new StringRequest(url,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) { //Se chamar a JsonRequest o listener receberá um jsonArray
-                            flowerList = FlowerJSONParser.parseFeed(response);
-                            updateDisplay();
-                    }
+        //No Retrofit 1.x  - RestAdapter
+        Retrofit retrofit = new Retrofit.Builder().baseUrl(ENDPOINT).addConverterFactory(GsonConverterFactory.create()).build(); //Usando o GSON converter para converter json em POJOS
+        FlowersAPI api = retrofit.create(FlowersAPI.class);//Dizendo que essa class que definirá o webservices e o que iremos chamar
+        Call<List<Flower>> call = api.getFlowers();
+            //Para executar assim é necessario estar em uma asyncTask, Retrofit 2  não trata threads sozinho exceto pelo enqueue
+            // flowerList = call.execute().body();
+           // updateDisplay();
+           call.enqueue(new Callback<List<Flower>>() {
+                @Override
+                public void onResponse(Call<List<Flower>> call, retrofit2.Response<List<Flower>> response) {
+                    flowerList = response.body();
+                    updateDisplay();
                 }
-
-                , new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) { //Callback de error
-                Toast.makeText(MainActivity.this, "Error Returning Flowers" + error.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        RequestQueue queue = Volley.newRequestQueue(this); //Fila de requests do Volley, adicionando o request criado
-        queue.add(request);
-
+                @Override
+                public void onFailure(Call<List<Flower>> call, Throwable t) {
+                    Toast.makeText(MainActivity.this, "Error Retrieving Data with Retrofit", Toast.LENGTH_SHORT).show();
+                }
+            });
     }
-
     protected  void updateDisplay(){
         if(flowerList!=null ){
            FlowerAdapter adapter = new FlowerAdapter(this, flowerList);
@@ -112,7 +113,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
     }
-
     protected boolean isOnline(){
         ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
