@@ -36,6 +36,7 @@ import okhttp3.Response;
 
 public class FlowerAdapter extends RecyclerView.Adapter<FlowerAdapter.ViewHolder> {
 
+    //Retrofit!!a
     private  Context context;
     private List<Flower> flowerList;
     private RequestQueue requestQueue;
