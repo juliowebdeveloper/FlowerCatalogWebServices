@@ -9,6 +9,10 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+
 /**
  * Created by Teste2 on 20/01/2017.
  */
@@ -20,9 +24,12 @@ public class HttpManager {
 
         try {
             URL url = new URL(uri);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            OkHttpClient client = new OkHttpClient();
+            Request request = new Request.Builder().url(url).build();
+            Response response = client.newCall(request).execute();
+
             StringBuilder stringBuilder = new StringBuilder();
-            reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+            reader = new BufferedReader(new InputStreamReader(response.body().byteStream()));
             String line;
             while((line = reader.readLine()) !=null){
                  stringBuilder.append(line +"\n");

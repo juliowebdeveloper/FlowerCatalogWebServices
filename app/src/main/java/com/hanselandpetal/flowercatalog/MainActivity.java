@@ -19,6 +19,11 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.hanselandpetal.flowercatalog.model.Flower;
 
 import java.io.IOException;
@@ -34,7 +39,6 @@ public class MainActivity extends AppCompatActivity {
 
     TextView textView;
     ProgressBar progressBar;
-    List<MyTask> tasks;
     List<Flower> flowerList;
     RecyclerView recyclerView;
 
@@ -48,7 +52,6 @@ public class MainActivity extends AppCompatActivity {
         textView.setMovementMethod(new ScrollingMovementMethod());//Setando scrolling num unico elemento
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
         progressBar.setVisibility(View.INVISIBLE);
-        tasks = new ArrayList<>();
         recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
     }
 
@@ -69,9 +72,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (id == R.id.action_dotask) {
             if(isOnline()) {
-                //requestData("http://services.hanselandpetal.com/feeds/flowers.xml");
-               // requestData("http://services.hanselandpetal.com/feeds/flowers.json");
-                requestData("http://services.hanselandpetal.com/secure/flowers.json"); //Com Autenticação
+                requestData("http://services.hanselandpetal.com/feeds/flowers.json"); //Com Autenticação
             }else{
                 Toast.makeText(this, "Your Device is not online", Toast.LENGTH_SHORT).show();
             }
@@ -80,11 +81,26 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    //Utilizando Volley - Trabalha na arquitetura de callbacks - Não precisa de AsyncTask
     protected void requestData(String url) {
-        MyTask task = new MyTask();
-        task.execute(url);
-       //task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, "Param1", "Param2", "Param3");//Para processamento em paralelo
+        StringRequest request = new StringRequest(url,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) { //Se chamar a JsonRequest o listener receberá um jsonArray
+                            flowerList = FlowerJSONParser.parseFeed(response);
+                            updateDisplay();
+                    }
+                }
 
+                , new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) { //Callback de error
+                Toast.makeText(MainActivity.this, "Error Returning Flowers" + error.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        RequestQueue queue = Volley.newRequestQueue(this); //Fila de requests do Volley, adicionando o request criado
+        queue.add(request);
 
     }
 
@@ -107,69 +123,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private class MyTask extends AsyncTask<String, String, List<Flower>>{
 
-        @Override
-        protected void onPreExecute() {
-           // updateDisplay("Executing Task");
-            if(tasks.size()==0) {
-                progressBar.setVisibility(View.VISIBLE);//Só deixa visivel se nao tiver tasks na lista
-            }
-            tasks.add(this);//Referenciando a propria class
-        }
-
-        @Override
-        protected void onPostExecute(List<Flower> result) { //Result que vem do doInBackground
-
-            //Fazendo o parsing do xml
-            //flowerList = FlowerXMLParser.parseFeed(result);
-            updateDisplay();
-            tasks.remove(this);
-            if(tasks.size()==0) {
-                progressBar.setVisibility(View.INVISIBLE);//Só deixa visivel se nao tiver tasks na lista
-            }
-
-        }
-
-        @Override
-        protected void onProgressUpdate(String... values) {
-           // updateDisplay(values[0]);
-        }
-
-        @Override
-        protected List<Flower> doInBackground(String... strings) {
-          //  String result = HttpManager.getData(strings[0]); //Passando o primeiro valor que é a propria url, caso tivessem mais, deve ser apontado
-           //Passando com o login para autorização
-            String result = HttpManager.getData(strings[0], "feeduser", "feedpassword");
-            //Fazendo o parser aqui no doInBackground
-            flowerList = FlowerJSONParser.parseFeed(result);
-
-            //chamando as imagens das flores - Transferido para o adapter
-      /*      for (Flower f:flowerList) {
-                String imageUrl = PHOTOS_BASE_URL + f.getPhoto(); //apontando pra imagem
-                try {
-                    InputStream in = (InputStream) new URL(imageUrl).getContent(); //retorna todo o content
-                    Bitmap bitmap = BitmapFactory.decodeStream(in);
-                    f.setBitmap(bitmap);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-            }*/
-
-            /* for (String s:
-                 strings) {
-                publishProgress("Working with: "+s);//O data type do parametro desse metodo é determinado pelo parametro do meio da class
-
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }*/
-            return flowerList;
-        }
-    }
 
 
 }
